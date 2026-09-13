@@ -27,7 +27,7 @@ public class Portfolio {
     private Double cashBalance;
     private Instant createdAt;
 
-    @OneToMany
+    @OneToMany(mappedBy = "portfolio")
     List<Position> positions =  new ArrayList<>();
 
 }

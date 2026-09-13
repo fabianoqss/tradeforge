@@ -1,4 +1,4 @@
-package com.fabiano.tradeforge.repositories;
+package com.fabiano.tradeforge.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

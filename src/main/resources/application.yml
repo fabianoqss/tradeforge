@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/tradeforge}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
+
+security:
+  client-id: ${CLIENT_ID:myclientid}
+  client-secret: ${CLIENT_SECRET:myclientsecret}
+  jwt:
+    duration: ${JWT_DURATION:86400}
+
+cors:
+  origins: ${CORS_ORIGINS:http://localhost:3000}

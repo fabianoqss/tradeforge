@@ -27,4 +27,8 @@ public class Position {
     @ManyToOne
     @JoinColumn(name = "asset_id", nullable = false)
     private Asset asset;
+
+    @ManyToOne
+    @JoinColumn(name = "portfolio_id", nullable = false)
+    private Portfolio portfolio;
 }
