@@ -3,7 +3,6 @@ package com.fabiano.tradeforge.entities;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.*;
@@ -45,11 +44,7 @@ public class User implements UserDetails {
 	@OneToOne
 	@JoinColumn(name = "portfolio_id")
 	private Portfolio portfolio;
-	
-	// Ainda sem mapeamento JPA definido e sem coluna correspondente no banco - definir relação mais tarde
-	private List<Asset> assets;
 
-	
 	@ManyToMany
 	@JoinTable(name = "tb_user_role",
 				joinColumns = @JoinColumn(name = "user_id"),
