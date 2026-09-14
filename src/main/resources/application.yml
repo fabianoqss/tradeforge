@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/tradeforge}
-    username: ${DATASOURCE_USERNAME:postgres}
-    password: ${DATASOURCE_PASSWORD:postgres}
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
 
 security:
-  client-id: ${CLIENT_ID:myclientid}
-  client-secret: ${CLIENT_SECRET:myclientsecret}
+  client-id: ${CLIENT_ID}
+  client-secret: ${CLIENT_SECRET}
   jwt:
-    duration: ${JWT_DURATION:86400}
+    duration: ${JWT_DURATION}
 
 cors:
-  origins: ${CORS_ORIGINS:http://localhost:3000}
+  origins: ${CORS_ORIGINS}
