@@ -28,6 +28,11 @@ public class Portfolio {
     private Instant createdAt;
 
     @OneToMany(mappedBy = "portfolio")
-    List<Position> positions =  new ArrayList<>();
+    private List<Position> positions =  new ArrayList<>();
 
+    public Portfolio(User user, Double cashBalance, Instant createdAt) {
+        this.user = user;
+        this.cashBalance = cashBalance;
+        this.createdAt = createdAt;
+    }
 }

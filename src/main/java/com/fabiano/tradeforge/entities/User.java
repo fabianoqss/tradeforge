@@ -41,8 +41,7 @@ public class User implements UserDetails {
 	@Column(unique = true)
 	private String nickname;
 
-	@OneToOne
-	@JoinColumn(name = "portfolio_id")
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Portfolio portfolio;
 
 	@ManyToMany
