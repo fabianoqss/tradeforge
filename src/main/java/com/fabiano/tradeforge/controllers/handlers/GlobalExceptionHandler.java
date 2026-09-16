@@ -1,5 +1,6 @@
 package com.fabiano.tradeforge.controllers.handlers;
 
+import com.fabiano.tradeforge.services.exceptions.ResourceNotFoundException;
 import com.fabiano.tradeforge.services.exceptions.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,18 @@ public class GlobalExceptionHandler {
         standardError.setStatus(status.value());
         standardError.setError("User Already Exists");
         standardError.setMessage(userAlreadyExistsException.getMessage());
+        standardError.setPath(request.getRequestURI());
+        return ResponseEntity.status(status).body(standardError);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<StandardError> resourceNotFound(ResourceNotFoundException resourceNotFoundException, HttpServletRequest request ) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        StandardError standardError = new StandardError();
+        standardError.setTimestamp(Instant.now());
+        standardError.setStatus(status.value());
+        standardError.setError("User doesn't exist");
+        standardError.setMessage(resourceNotFoundException.getMessage());
         standardError.setPath(request.getRequestURI());
         return ResponseEntity.status(status).body(standardError);
     }
