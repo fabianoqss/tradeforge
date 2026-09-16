@@ -1,47 +1,52 @@
 # TradeForge
 
-TradeForge is a personal project built to deepen my knowledge of Java backend development, Spring Boot, domain modeling, databases, transactions, concurrency, external API integration, and — later on — artificial intelligence.
+TradeForge is an investment/trading simulation platform. Users trade virtual assets against real market prices, using a fictitious cash balance instead of real money.
 
-This README documents the vision, architecture, and design decisions guiding the project as it evolves.
+No real funds are involved anywhere in the system — it is a sandbox for simulating portfolio management and order execution against live market data.
 
-## Mentorship approach
+## Table of contents
 
-While developing this project with AI assistance, the goal is not to have the entire codebase implemented automatically. Instead, the collaboration follows these principles:
+- [Overview](#overview)
+- [Tech stack](#tech-stack)
+- [Architecture](#architecture)
+- [Domain model](#domain-model)
+- [Core flow](#core-flow)
+- [Getting started](#getting-started)
+- [Roadmap](#roadmap)
 
-1. Don't auto-implement large parts of the project unless necessary.
-2. Explain the concept and business rule first.
-3. Guide toward the solution rather than just handing it over.
-4. Review the code that gets written.
-5. Point out modeling or architectural mistakes.
-6. When multiple solutions exist, explain the trade-offs.
-7. Prioritize Java/Spring best practices.
-8. Avoid introducing microservices without a very strong justification.
-9. Avoid adding technology just for the sake of complexity.
-10. Keep in mind that the goal is to learn by building.
+## Overview
 
-## 1. Overview
-
-TradeForge is an **investment/trading simulation platform**.
-
-There is no real money involved. Each user has a virtual wallet with a fictitious balance and can buy and sell assets using prices obtained from financial market APIs.
+Each user owns a virtual portfolio with a cash balance and can buy and sell assets at prices sourced from external market data APIs.
 
 Example:
 
-A user holds:
+```text
+User holds:
+  Cash Balance: $100,000
+  10 AAPL
+  5  NVDA
+```
 
-- Cash Balance: $100,000
-- 10 AAPL
-- 5 NVDA
+The platform fetches real market quotes and lets the user place buy/sell orders against them, tracking positions, average price, and profit & loss over time.
 
-The system fetches market prices through an external API and lets the user create buy and sell orders.
+## Tech stack
 
-## 2. Architecture
+- Java 21
+- Spring Boot 4
+- Spring Web / Spring MVC
+- Spring Data JPA / Hibernate
+- Spring Security (OAuth2 Authorization & Resource Server)
+- PostgreSQL
+- Flyway
+- Bean Validation
+- Lombok
+- Maven
 
-**Important:** this project will **not** use microservices.
+WebSocket support is included for future real-time features (live quotes, portfolio updates). R2DBC is intentionally not used — the project relies on the JDBC/JPA stack throughout.
 
-It is being built as a **modular monolith** in Spring Boot.
+## Architecture
 
-Conceptual structure:
+TradeForge is built as a **modular monolith**, not a microservices system: a single Spring Boot application and a single deployment, with clear logical boundaries between business domains.
 
 ```text
 TradeForge
@@ -60,84 +65,39 @@ TradeForge
 └── shared
 ```
 
-A single Spring Boot application, a single deployment, with logical separation between the different domains.
+This keeps operational complexity low (one process, one database, one deploy) while still enforcing separation of concerns between domains as the codebase grows.
 
-## 3. Current stack
-
-Backend:
-
-- Java
-- Spring Boot
-- Spring Web / Spring MVC
-- Spring Data JPA
-- Hibernate
-- Spring Security
-- PostgreSQL
-- Bean Validation
-- Flyway
-- Lombok
-- Maven
-- Spring Boot DevTools
-
-WebSocket is being considered for later stages, mainly for real-time quote updates.
-
-R2DBC is not being used.
-
-## 4. Core domain
-
-At this stage, the main entities being modeled are:
+## Domain model
 
 ### User
 
-Represents a platform user.
+Represents a platform account.
 
-Example attributes:
-
-- id
-- name
-- email
-- password
-- role
-- status
-- createdAt
-
-There will initially be two roles:
-
-- USER
-- ADMIN
+| Field     | Description                     |
+|-----------|----------------------------------|
+| id        | Primary key                     |
+| name      | Full name                       |
+| email     | Login identifier                |
+| password  | BCrypt-hashed password          |
+| cpf       | Unique government identifier    |
+| roles     | `USER`, `ADMIN`                 |
 
 ### Portfolio
 
-Represents the user's virtual financial wallet.
+The user's virtual wallet — a 1:1 relationship with `User`.
 
-Example attributes:
+| Field        | Description                    |
+|--------------|----------------------------------|
+| id           | Primary key                    |
+| user         | Owning side of the relationship (`user_id` FK, `NOT NULL UNIQUE`) |
+| cashBalance  | Available fictitious cash      |
+| positions    | Assets currently held           |
 
-- id
-- user
-- cashBalance
-- positions
-
-The initial design is a 1:1 relationship between User and Portfolio.
-
-The foreign key will likely live on the Portfolio side:
-
-```text
-Portfolio
-    |
-    +-- user_id
-```
-
-Therefore:
-
-```text
-User 1:1 Portfolio
-```
+A portfolio cannot exist without a user, and is created together with the user account at registration time.
 
 ### Asset
 
-Represents a tradable asset.
-
-Example:
+A tradable instrument.
 
 ```text
 symbol: AAPL
@@ -148,387 +108,139 @@ currency: USD
 tradable: true
 ```
 
-Possible attributes:
-
-- id
-- symbol
-- name
-- assetType
-- exchange
-- currency
-- tradable
-
-The ADMIN will be able to register, enable, or disable assets available for trading.
+Assets are managed by administrators, who can register, enable, or disable them for trading.
 
 ### Position
 
-A Position represents how much of a given asset a given portfolio holds.
-
-Example:
+How much of a given asset a given portfolio holds:
 
 ```text
 Portfolio
-|
-+-- Position
-|   Asset: AAPL
-|   Quantity: 10
-|   Average Price: $200
-|
-+-- Position
-    Asset: NVDA
-    Quantity: 5
-    Average Price: $180
+├── Position — AAPL, quantity: 10, average price: $200
+└── Position — NVDA, quantity: 5,  average price: $180
 ```
 
-A Position should have roughly:
-
-- id
-- portfolio
-- asset
-- quantity
-- averagePrice
-- realizedPnl
-
-Relationships:
+| Field         | Description                          |
+|---------------|----------------------------------------|
+| id            | Primary key                          |
+| portfolio     | Owning portfolio                     |
+| asset         | Related asset                        |
+| quantity      | Units currently held                 |
+| averagePrice  | Volume-weighted average entry price  |
+| realizedPnl   | Profit/loss already realized         |
 
 ```text
 Portfolio 1:N Position
-Position N:1 Asset
+Position  N:1 Asset
 ```
 
-Position is the entity that answers:
+A portfolio can hold at most one `Position` per `Asset` (`UNIQUE(portfolio_id, asset_id)`).
 
-"This portfolio holds X units of this asset at an average price of Y."
+### Order *(planned)*
 
-The same portfolio should never have two different Positions for the same Asset.
+A user's instruction to buy or sell an asset.
 
-A constraint similar to the following is planned:
+Types: `BUY`, `SELL`, `MARKET`, `LIMIT` (later: `STOP`, `STOP_LIMIT`).
 
 ```text
-UNIQUE(portfolio_id, asset_id)
+CREATED → PENDING → FILLED
+                  → CANCELLED
+                  → REJECTED
 ```
 
-### Order
+### Execution *(planned)*
 
-To be implemented later.
+The actual fulfillment of an `Order`. Orders and executions are modeled separately: an order expresses intent, an execution records what actually happened — a single order may later be filled through multiple executions.
 
-Represents a user's instruction to buy or sell a given asset.
-
-Initial scope:
-
-- BUY
-- SELL
-- MARKET
-- LIMIT
-
-Later:
-
-- STOP
-- STOP_LIMIT
-
-An Order will have a lifecycle similar to:
-
-```text
-CREATED
-   |
-PENDING
-   |
-   +----> CANCELLED
-   |
-   +----> REJECTED
-   |
-   +----> FILLED
-```
-
-### Execution
-
-Order and Execution will not be the same entity.
-
-Order represents the trading intent.
-
-Execution represents the actual fulfillment of the order.
-
-In the future, an Order may have multiple Executions/Fills, though this can be simplified for the MVP.
-
-## 5. Main system flow
-
-The expected basic flow is:
+## Core flow
 
 ```text
 User
-   |
-   v
-Creates an Order
-   |
-   v
-Trading Engine
-   |
-   +--> validates the Asset
-   |
-   +--> checks the quote
-   |
-   +--> checks the balance
-   |
-   +--> checks business rules
-   |
-   v
-Executes BUY/SELL
-   |
-   v
-Execution
-   |
-   v
-Updates the Position
-   |
-   v
-Updates the Portfolio
+  └─ places an Order
+       └─ Trading Engine
+            ├─ validates the asset
+            ├─ fetches the current quote
+            ├─ checks available balance
+            ├─ applies business/risk rules
+            └─ executes the trade
+                 └─ Execution
+                      ├─ updates the Position (quantity, average price)
+                      └─ updates the Portfolio (cash balance)
 ```
 
-Example:
-
-The user holds:
+Example — buying 10 AAPL at $200/share with $10,000 in cash:
 
 ```text
-Cash = $10,000
-```
-
-Requests:
-
-```text
-BUY
-10 AAPL
-MARKET
-```
-
-Quote:
-
-```text
-AAPL = $200
-```
-
-Cost:
-
-```text
-10 × $200 = $2,000
-```
+Cost = 10 × $200 = $2,000
 
 After execution:
-
-```text
-Cash = $8,000
-
-Position:
-AAPL
-quantity = 10
-averagePrice = $200
+  Cash    = $8,000
+  Position: AAPL, quantity = 10, averagePrice = $200
 ```
 
-## 6. Average price
-
-If the user buys:
+**Average price** is volume-weighted across purchases:
 
 ```text
 100 shares × $30 = $3,000
-50 shares × $40 = $2,000
+ 50 shares × $40 = $2,000
+─────────────────────────
+150 shares → ($3,000 + $2,000) / 150 = $33.33
 ```
 
-The average price must weight the quantities:
+**P&L** is tracked in two forms:
 
-```text
-($3,000 + $2,000) / 150
-= $33.33
-```
+- **Unrealized** — on an open position: `(currentPrice - averagePrice) × quantity`
+- **Realized** — booked once a position is (partially) sold
 
-This calculation is the responsibility of the domain/trading logic, not an LLM.
+All monetary values use `BigDecimal`, never floating-point types.
 
-## 7. P&L
-
-The system must distinguish between:
-
-**Unrealized P&L**
-
-Profit/loss of a position that is still open.
-
-Example:
-
-```text
-averagePrice = $200
-currentPrice = $230
-quantity = 10
-
-($230 - $200) × 10
-= +$300
-```
-
-**Realized P&L**
-
-Profit/loss actually realized when a sale occurs.
-
-Monetary values must use `BigDecimal`, not `double`.
-
-## 8. Market Data
-
-The system must consume an external financial market API.
-
-The plan is to keep an abstraction similar to:
+Market data is abstracted behind a provider-agnostic interface so the domain layer never depends on a specific vendor:
 
 ```java
 public interface MarketDataClient {
-
     Quote getQuote(String symbol);
-
 }
 ```
 
-This way, the domain layer stays decoupled from any specific provider.
-
-The flow will be:
-
 ```text
-External Market API
-        |
-        v
-MarketDataClient
-        |
-        v
-MarketDataService
-        |
-        v
-Trading Engine
+External Market API → MarketDataClient → MarketDataService → Trading Engine
 ```
 
-## 9. Concurrency
+## Getting started
 
-One of the advanced topics to explore in this project is concurrency.
+### Prerequisites
 
-Example problem:
-
-```text
-Balance = $10,000
-
-Request A:
-BUY $8,000
-
-Request B:
-BUY $8,000
-```
-
-If both requests read the balance at the same time, the system must not allow $16,000 worth of purchases to go through.
-
-Topics to study and apply where needed:
-
-- `@Transactional`
-- optimistic locking
-- pessimistic locking
-- isolation levels
-- database constraints
-- idempotency
-
-The goal is not to build a simple CRUD app, but to explore real consistency problems.
-
-## 10. ADMIN
-
-The ADMIN role is responsible for administering the platform, not for performing arbitrary operations on user wallets.
-
-Initially:
-
-- user management
-- blocking/unblocking users
-- registering assets
-- enabling/disabling assets
-
-Later:
-
-- global risk rules
-- order monitoring
-- auditing
-- status of external integrations
-
-The ADMIN must never directly alter P&L, positions, or executed orders.
-
-## 11. WebSocket
-
-WebSocket is not a priority for the MVP.
-
-Initially:
-
-```text
-GET /api/market/quote/AAPL
-```
-
-will be enough.
-
-Later, WebSocket may provide:
-
-- real-time quotes
-- portfolio updates
-- P&L updates
-- order execution notifications
-
-## 12. Artificial Intelligence
-
-AI will be added **after the core Trading Engine is working**.
-
-AI will not be responsible for deterministic financial calculations.
-
-The plan is to later build something similar to an:
-
-**AI Portfolio Analyst**
-
-Possible features:
-
-- explaining why the portfolio gained/lost value
-- analyzing portfolio concentration
-- explaining risks
-- summarizing news related to held assets
-- news sentiment analysis
-- anomaly detection
-- RAG over financial documents
-- answering questions about the portfolio itself
-
-Possible future architecture:
-
-```text
-Spring Boot
-│
-├── Trading Engine
-├── Portfolio
-├── Market
-├── Risk Engine
-└── AI Integration
-         |
-         +--> LLM
-         |
-         +--> RAG
-         |
-         +--> Python/FastAPI ML
-```
-
-Java/Spring will remain the main application.
-
-Python may be used later, only where Machine Learning genuinely makes sense.
-
-## 13. Educational goal
-
-This project isn't just about shipping a working application.
-
-The goal is to use it to deeply learn:
-
-- Java
-- Spring Boot
-- JPA/Hibernate
-- Spring Security
+- JDK 21
+- Maven
 - PostgreSQL
-- domain modeling
-- transactions
-- concurrency
-- locking
-- external APIs
-- WebSocket
-- testing
-- software architecture
-- Java + AI/ML integration
 
-## Current status
+### Configuration
 
-The project is in the **initial entity and JPA relationship modeling** stage (User, Portfolio, Role, Asset, Position), with the authentication/registration flow being built first.
+The application is configured entirely through environment variables (`src/main/resources/application.yml`):
+
+| Variable             | Description                          |
+|----------------------|----------------------------------------|
+| `DATASOURCE_URL`      | JDBC URL of the PostgreSQL database   |
+| `DATASOURCE_USERNAME` | Database username                     |
+| `DATASOURCE_PASSWORD` | Database password                     |
+| `CLIENT_ID`           | OAuth2 client id                      |
+| `CLIENT_SECRET`       | OAuth2 client secret                  |
+| `JWT_DURATION`        | Access token lifetime                 |
+| `CORS_ORIGINS`        | Allowed CORS origins                  |
+
+### Running
+
+```bash
+mvn spring-boot:run
+```
+
+Database migrations are managed by Flyway and run automatically on startup, creating the schema and seeding the default roles (`ROLE_USER`, `ROLE_ADMIN`).
+
+## Roadmap
+
+- **Trading engine** — order placement, validation, and execution against live quotes
+- **Concurrency & consistency** — safe concurrent balance updates via transactions, optimistic/pessimistic locking, and database constraints, avoiding naive CRUD-style writes
+- **Market data integration** — pluggable client for an external quotes provider
+- **Admin capabilities** — user management, asset lifecycle, risk rules, auditing (administrators manage the platform, never portfolios or executed trades directly)
+- **Real-time updates** — WebSocket-based live quotes, portfolio and P&L updates, order notifications
+- **AI Portfolio Analyst** — natural-language portfolio insights, risk explanations, news summarization/sentiment, and RAG over financial documents, layered on top of the deterministic trading core rather than replacing it

@@ -7,7 +7,10 @@ import com.fabiano.tradeforge.entities.Role;
 import com.fabiano.tradeforge.entities.User;
 import com.fabiano.tradeforge.repositories.RoleRepository;
 import com.fabiano.tradeforge.repositories.UserRepository;
+import com.fabiano.tradeforge.services.exceptions.ResourceNotFoundException;
 import com.fabiano.tradeforge.services.exceptions.UserAlreadyExistsException;
+import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +46,20 @@ public class AuthService {
 
         user = userRepository.save(user);
 
-        return  new UserResponseDTO(user.getName(), user.getNickname(), user.getEmail());
+        return  new UserResponseDTO(user.getId(), user.getName(), user.getNickname(), user.getEmail());
+    }
+
+    @Transactional
+    public void deleteUser(Long id){
+        if(!userRepository.existsById(id)){
+            throw new ResourceNotFoundException("User Not Found");
+        }
+        try{
+            userRepository.deleteById(id);
+        }catch(DataIntegrityViolationException e){
+            throw new DataIntegrityViolationException("Referential integrity violation");
+        }
+
     }
 
     public void copyDtoToEntity(User user, UserRequestDTO userRequestDTO) {
@@ -53,6 +69,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(userRequestDTO.password()));
         user.setCpf(userRequestDTO.CPF());
     }
+
 
 
 }
