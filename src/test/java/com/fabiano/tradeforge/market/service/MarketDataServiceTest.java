@@ -30,7 +30,7 @@ class MarketDataServiceTest {
 
         log.info("Latest Quote retrieved: {}", result);
 
-        assertEquals(quote, result);
+        assertEquals(Optional.of(quote), result);
     }
 
     @Test
@@ -57,7 +57,7 @@ class MarketDataServiceTest {
 
         log.info("Latest Quote retrieved: {}", result);
 
-        assertEquals(secondQuote, result);
+        assertEquals(Optional.of(secondQuote), result);
     }
 
 
