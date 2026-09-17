@@ -12,3 +12,7 @@ security:
 
 cors:
   origins: ${CORS_ORIGINS}
+
+market:
+  twelve-data:
+    api-key: ${TWELVE_DATA_API_KEY}
