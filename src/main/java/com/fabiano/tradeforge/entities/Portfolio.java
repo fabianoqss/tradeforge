@@ -3,6 +3,7 @@ package com.fabiano.tradeforge.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,13 +25,13 @@ public class Portfolio {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    private Double cashBalance;
+    private BigDecimal cashBalance;
     private Instant createdAt;
 
     @OneToMany(mappedBy = "portfolio")
     private List<Position> positions =  new ArrayList<>();
 
-    public Portfolio(User user, Double cashBalance, Instant createdAt) {
+    public Portfolio(User user, BigDecimal cashBalance, Instant createdAt) {
         this.user = user;
         this.cashBalance = cashBalance;
         this.createdAt = createdAt;

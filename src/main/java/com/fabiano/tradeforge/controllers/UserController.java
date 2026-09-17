@@ -5,6 +5,7 @@ import com.fabiano.tradeforge.dtos.response.UserResponseDTO;
 import com.fabiano.tradeforge.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -27,6 +28,13 @@ public class UserController {
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(dto.id()).toUri();
         return ResponseEntity.created(uri).body(dto);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping(value = "/me")
+    public ResponseEntity<UserResponseDTO> getMe() {
+        UserResponseDTO dto = userService.getMe();
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping(value = "/{id}")

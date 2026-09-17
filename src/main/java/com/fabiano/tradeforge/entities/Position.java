@@ -3,6 +3,8 @@ package com.fabiano.tradeforge.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "tb_position")
 @Getter
@@ -18,11 +20,11 @@ public class Position {
     private Long id;
 
     //Provavelmente puxaremos esse preço médio por meio de APIS
-    private Double averagePrice;
+    private BigDecimal averagePrice;
 
     private Integer quantity;
 
-    private Double realizedPnl;
+    private BigDecimal realizedPnl;
 
     @ManyToOne
     @JoinColumn(name = "asset_id", nullable = false)

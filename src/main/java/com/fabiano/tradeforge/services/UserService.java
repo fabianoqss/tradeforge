@@ -12,12 +12,16 @@ import com.fabiano.tradeforge.services.exceptions.ResourceNotFoundException;
 import com.fabiano.tradeforge.services.exceptions.UserAlreadyExistsException;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -58,7 +62,7 @@ public class UserService implements UserDetailsService {
         User user = new User();
         copyDtoToEntity(user, userRequestDTO);
 
-        Portfolio portfolio = new Portfolio(user, 10000.00, Instant.now());
+        Portfolio portfolio = new Portfolio(user, new BigDecimal("10000.00"), Instant.now());
         user.setPortfolio(portfolio);
 
         Role role = roleRepository.findByAuthority("ROLE_USER")
@@ -81,6 +85,24 @@ public class UserService implements UserDetailsService {
             throw new DataIntegrityViolationException("Referential integrity violation");
         }
 
+    }
+
+    @Transactional
+    public UserResponseDTO getMe() {
+        User entity = authenticated();
+        return new UserResponseDTO(entity.getId(), entity.getName(), entity.getNickname(), entity.getEmail());
+    }
+
+    public User authenticated() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            Jwt jwtPrincipal = (Jwt) authentication.getPrincipal();
+            String username = jwtPrincipal.getClaim("username");
+            return userRepository.findByEmail(username).get();
+        }
+        catch (Exception e) {
+            throw new UsernameNotFoundException("Invalid user");
+        }
     }
 
     public void copyDtoToEntity(User user, UserRequestDTO userRequestDTO) {
