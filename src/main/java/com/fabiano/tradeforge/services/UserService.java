@@ -10,7 +10,6 @@ import com.fabiano.tradeforge.repositories.RoleRepository;
 import com.fabiano.tradeforge.repositories.UserRepository;
 import com.fabiano.tradeforge.services.exceptions.ResourceNotFoundException;
 import com.fabiano.tradeforge.services.exceptions.UserAlreadyExistsException;
-import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -39,6 +39,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         List<UserDetailsProjection> result = userRepository
                 .searchUserAndRolesByEmail(username);
@@ -54,6 +55,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    @Transactional
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
         if(userRepository.existsByCpf(userRequestDTO.CPF())){
             throw new UserAlreadyExistsException("User Already Exists");
@@ -87,12 +89,13 @@ public class UserService implements UserDetailsService {
 
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public UserResponseDTO getMe() {
         User entity = authenticated();
         return new UserResponseDTO(entity.getId(), entity.getName(), entity.getNickname(), entity.getEmail());
     }
 
+    @Transactional(readOnly = true)
     public User authenticated() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -105,7 +108,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public void copyDtoToEntity(User user, UserRequestDTO userRequestDTO) {
+    private void copyDtoToEntity(User user, UserRequestDTO userRequestDTO) {
         user.setEmail(userRequestDTO.email());
         user.setNickname(userRequestDTO.nickname());
         user.setName(userRequestDTO.name());

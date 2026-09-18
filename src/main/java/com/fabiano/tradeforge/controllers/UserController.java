@@ -30,7 +30,7 @@ public class UserController {
         return ResponseEntity.created(uri).body(dto);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping(value = "/me")
     public ResponseEntity<UserResponseDTO> getMe() {
         UserResponseDTO dto = userService.getMe();

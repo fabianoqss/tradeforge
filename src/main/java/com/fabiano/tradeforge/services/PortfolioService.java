@@ -5,20 +5,18 @@ import com.fabiano.tradeforge.dtos.response.PositionResponseDTO;
 import com.fabiano.tradeforge.entities.Portfolio;
 import com.fabiano.tradeforge.entities.Position;
 import com.fabiano.tradeforge.entities.User;
-import com.fabiano.tradeforge.repositories.PortifolioRepository;
+import com.fabiano.tradeforge.repositories.PortfolioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-public class PorftolioService {
+public class PortfolioService {
 
-    private final PortifolioRepository portifolioRepository;
     private final UserService userService;
 
-    public PorftolioService(PortifolioRepository portifolioRepository, UserService userService) {
-        this.portifolioRepository = portifolioRepository;
+    public PortfolioService( UserService userService) {
         this.userService = userService;
     }
 
