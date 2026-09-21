@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: tradeforge-postgres
+    environment:
+      POSTGRES_DB: tradeforge
+      POSTGRES_USER: tradeforge
+      POSTGRES_PASSWORD: tradeforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - tradeforge-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tradeforge-postgres-data:
