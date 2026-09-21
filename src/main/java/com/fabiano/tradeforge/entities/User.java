@@ -41,7 +41,9 @@ public class User implements UserDetails {
 	@Column(unique = true)
 	private String nickname;
 
-	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Boolean enabled = true;
+
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Portfolio portfolio;
 
 	@ManyToMany
@@ -90,6 +92,6 @@ public class User implements UserDetails {
 
 	@Override
 	public boolean isEnabled() {
-		return UserDetails.super.isEnabled();
+		return Boolean.TRUE.equals(enabled);
 	}
 }

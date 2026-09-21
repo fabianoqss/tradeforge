@@ -49,6 +49,7 @@ public class UserService implements UserDetailsService {
         User user = new User();
         user.setEmail(result.get(0).getUsername());
         user.setPassword(result.get(0).getPassword());
+        user.setEnabled(result.get(0).getEnabled());
         for(UserDetailsProjection projection : result){
             user.addRole(new Role(projection.getRoleId(), projection.getAuthority()));
         }
@@ -87,6 +88,22 @@ public class UserService implements UserDetailsService {
             throw new DataIntegrityViolationException("Referential integrity violation");
         }
 
+    }
+
+    @Transactional
+    public void blockUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+        user.setEnabled(false);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void unblockUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+        user.setEnabled(true);
+        userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
