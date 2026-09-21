@@ -60,8 +60,7 @@ public class AuthorizationServerConfig {
 	@Value("${security.client-secret}")
 	private String clientSecret;
 
-	@Value("${security.jwt.duration}")
-	private Integer jwtDurationSeconds;
+	private static final Duration JWT_DURATION = Duration.ofHours(1);
 
 	@Autowired
 	private UserDetailsService userDetailsService;
@@ -125,7 +124,7 @@ public class AuthorizationServerConfig {
 		// @formatter:off
 		return TokenSettings.builder()
 			.accessTokenFormat(OAuth2TokenFormat.SELF_CONTAINED)
-			.accessTokenTimeToLive(Duration.ofSeconds(jwtDurationSeconds))
+			.accessTokenTimeToLive(JWT_DURATION)
 			.build();
 		// @formatter:on
 	}

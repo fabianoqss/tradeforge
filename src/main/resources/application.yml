@@ -7,8 +7,6 @@ spring:
 security:
   client-id: ${CLIENT_ID}
   client-secret: ${CLIENT_SECRET}
-  jwt:
-    duration: ${JWT_DURATION}
 
 cors:
   origins: ${CORS_ORIGINS}
