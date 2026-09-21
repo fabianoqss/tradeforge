@@ -9,6 +9,7 @@ import com.fabiano.tradeforge.services.exceptions.UserAlreadyExistsException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -87,6 +88,18 @@ public class GlobalExceptionHandler {
         standardError.setStatus(status.value());
         standardError.setError("Quote Unavailable");
         standardError.setMessage(e.getMessage());
+        standardError.setPath(request.getRequestURI());
+        return ResponseEntity.status(status).body(standardError);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<StandardError> concurrentModification(ObjectOptimisticLockingFailureException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        StandardError standardError = new StandardError();
+        standardError.setTimestamp(Instant.now());
+        standardError.setStatus(status.value());
+        standardError.setError("Concurrent Modification");
+        standardError.setMessage("This portfolio was modified by another request at the same time. Please retry.");
         standardError.setPath(request.getRequestURI());
         return ResponseEntity.status(status).body(standardError);
     }

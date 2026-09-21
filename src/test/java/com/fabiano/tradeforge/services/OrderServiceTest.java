@@ -43,7 +43,9 @@ class OrderServiceTest {
 
     private Portfolio portfolioWithBalance(String balance) {
         Portfolio portfolio = new Portfolio();
+        portfolio.setId(1L);
         portfolio.setCashBalance(new BigDecimal(balance));
+        Mockito.when(portfolioRepository.findByUserIdForUpdate(1L)).thenReturn(Optional.of(portfolio));
         return portfolio;
     }
 
@@ -56,6 +58,7 @@ class OrderServiceTest {
 
     private void mockAuthenticatedUser(Portfolio portfolio) {
         User user = new User();
+        user.setId(1L);
         user.setPortfolio(portfolio);
         Mockito.when(userService.authenticated()).thenReturn(user);
     }

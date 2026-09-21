@@ -19,6 +19,9 @@ public class Position {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     //Provavelmente puxaremos esse preço médio por meio de APIS
     private BigDecimal averagePrice;
 

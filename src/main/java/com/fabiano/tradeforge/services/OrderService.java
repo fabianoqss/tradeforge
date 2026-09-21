@@ -53,7 +53,16 @@ public class OrderService {
     @Transactional
     public OrderResponseDTO placeOrder(OrderRequestDTO dto) {
         User user = userService.authenticated();
-        Portfolio portfolio = user.getPortfolio();
+
+        // Locks the portfolio row for the duration of this transaction so two
+        // concurrent orders on the same portfolio can't both read the same
+        // cashBalance and both pass the balance/quantity check (lost update).
+        // Looked up by user id (not user.getPortfolio()) so the lazy
+        // association is never loaded unlocked first — doing so would leave
+        // a stale copy in the persistence context and make Hibernate reject
+        // the locked re-read once a concurrent transaction bumps the version.
+        Portfolio portfolio = portfolioRepository.findByUserIdForUpdate(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Portfolio Not Found"));
 
         Asset asset = assetRepository.findBySymbol(dto.assetSymbol())
                 .orElseThrow(() -> new ResourceNotFoundException("Asset Not Found"));
